@@ -33,12 +33,42 @@ const Customizer = () => {
           prompt={prompt} 
           setPrompt={setPrompt} 
           generatingImg={generatingImg} 
-          setGeneratingImg={setGeneratingImg} 
+          handleSubmit={handleSubmit}
         />;
       default:
         return null;
     }
+  
   };
+  const handleSubmit = async (type) => {
+    if(!prompt) return alert("Please enter a prompt");
+
+    try {
+      // call our backend API to generate an ai image
+      
+      setGeneratingImg(true);
+
+      const response = await fetch('http://localhost:8081/api/v1/dalle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt,
+        })
+      })
+
+      const data = await response.json();
+
+      handleDecals(type, `data:image/png;base64,${data.photo}`)
+    } catch (error) {
+      alert(error)
+    } finally {
+      setGeneratingImg(false);
+      setActiveEditorTab("");
+    }
+  }
+
   const handleDecals = (type, result) => {
     const decalType = DecalTypes[type];
 
@@ -112,18 +142,13 @@ const Customizer = () => {
 
           {/* Filter Tabs */}
           <motion.div className="filtertabs-container" {...slideAnimation('up')}>
-            {FilterTabs.map((tab) => (
+          {FilterTabs.map((tab) => (
               <Tab
                 key={tab.name}
                 tab={tab}
                 isFilterTab
-                isActiveTab={activeFilterTab[tab.name]} // Check if the tab is active
-                handleClick={() =>
-                  setActiveFilterTab((prev) => ({
-                    ...prev,
-                    [tab.name]: !prev[tab.name], // Toggle active state
-                  }))
-                }
+                isActiveTab={activeFilterTab[tab.name]}
+                handleClick={() => handleActiveFilterTab(tab.name)}
               />
             ))}
           </motion.div>
